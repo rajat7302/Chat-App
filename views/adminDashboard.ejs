@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/signup.css">
+    <style>
+        /* Admin Dashboard Inline Styling Cleanups */
+        .status-banned { color: #ff4d4d; font-weight: bold; }
+        .status-active { color: #00ff88; font-weight: bold; }
+        .admin-btn { border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-success { background-color: #198754; }
+        .btn-secondary { background-color: #6c757d; }
+    </style>
+</head>
+<body style="height: auto; min-height: 100vh; padding: 2rem;">
+    <div style="width: 90%; max-width: 1000px; margin: 0 auto; color: white;">
+        <h1 id="h">Admin Control Panel</h1>
+
+        <!-- Pending Reports -->
+        <h2 style="margin-top: 2rem;">Incoming Reports</h2>
+        <% if (reports.length === 0) { %>
+            <p style="color: rgba(255, 255, 255, 0.7);">No pending reports. All clear!</p>
+        <% } else { %>
+            <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 2rem; background: rgba(255, 255, 255, 0.1);">
+                <thead>
+                    <tr style="background: rgba(0,0,0,0.3);">
+                        <th style="padding: 10px;">Reporter</th>
+                        <th style="padding: 10px;">Offender</th>
+                        <th style="padding: 10px;">Reason</th>
+                        <th style="padding: 10px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% reports.forEach(report => { %>
+                        <tr style="text-align: center;">
+                            <td style="padding: 8px;"><%= report.reporter ? report.reporter.username : 'Unknown' %></td>
+                            <td style="padding: 8px;"><strong>@<%= report.reportedUser ? report.reportedUser.username : 'Unknown' %></strong></td>
+                            <td style="padding: 8px;"><%= report.reason %></td>
+                            <td style="padding: 8px;">
+                                <% if (report.reportedUser) { %>
+                                    <form action="/admin/report/resolve-and-ban/<%= report._id %>" method="POST" style="display: inline;">
+                                        <input type="hidden" name="action" value="ban">
+                                        <button type="submit" class="admin-btn btn-danger">
+                                            Ban User & Resolve
+                                        </button>
+                                    </form>
+
+                                    <form action="/admin/report/resolve-and-ban/<%= report._id %>" method="POST" style="display: inline; margin-left: 5px;">
+                                        <input type="hidden" name="action" value="dismiss">
+                                        <button type="submit" class="admin-btn btn-secondary">
+                                            Dismiss
+                                        </button>
+                                    </form>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+
+        <!-- User Registry -->
+        <h2>Registered Users</h2>
+        <table border="1" style="width: 100%; border-collapse: collapse; background: rgba(255, 255, 255, 0.1);">
+            <thead>
+                <tr style="background: rgba(0,0,0,0.3);">
+                    <th style="padding: 10px;">Username</th>
+                    <th style="padding: 10px;">Email</th>
+                    <th style="padding: 10px;">Role</th>
+                    <th style="padding: 10px;">Status</th>
+                    <th style="padding: 10px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(user => { %>
+                    <tr style="text-align: center;">
+                        <td style="padding: 8px;"><%= user.username %></td>
+                        <td style="padding: 8px;"><%= user.email %></td>
+                        <td style="padding: 8px;"><%= user.role %></td>
+                        <td style="padding: 8px;">
+                            <span class="<%= user.isBanned ? 'status-banned' : 'status-active' %>">
+                                <%= user.isBanned ? 'Banned' : 'Active' %>
+                            </span>
+                        </td>
+                        <td style="padding: 8px;">
+                            <% if (user.role !== 'admin') { %>
+                                <form action="/admin/user/toggle-ban/<%= user._id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="admin-btn <%= user.isBanned ? 'btn-success' : 'btn-danger' %>" style="padding: 5px 10px;">
+                                        <%= user.isBanned ? 'Unban' : 'Ban' %>
+                                    </button>
+                                </form>
+                            <% } else { %>
+                                <span style="color: rgba(255, 255, 255, 0.5);">N/A</span>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

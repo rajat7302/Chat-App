@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/chat.css">
+    <style>
+        /* Image Viewer Modal Styling */
+        .image-viewer-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .image-viewer-content {
+            max-width: 90vw;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+        .image-viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .image-viewer-close:hover {
+            color: var(--danger, #ff4d4f);
+        }
+        .clickable-avatar {
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+        .clickable-avatar:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <% 
+        const getStrId = (item) => (item && item._id) ? item._id.toString() : (item ? item.toString() : '');
+        const blockedIds = (user?.blockedUsers || []).map(getStrId);
+        
+        // Filter out blocked users AND deduplicate entries by user ID
+        const rawVisible = (user?.friends || []).filter(f => !blockedIds.includes(getStrId(f)));
+        const visibleFriends = Array.from(
+            new Map(rawVisible.map(f => [getStrId(f), f])).values()
+        );
+    %>
+
+    <div class="app-container" 
+         id="appContainer"
+         data-user-id="<%= user?._id || '' %>"
+         data-user-username="<%= user?.username || '' %>"
+         data-blocked="<%= JSON.stringify(blockedIds) %>"
+         data-friends="<%= JSON.stringify(visibleFriends || []) %>">
+
+        <div class="sidebar">
+            <div class="profile-bar">
+                <div class="profile-info-wrapper" style="display: flex; align-items: center; gap: 12px;">
+                    <!-- User's own profile picture -->
+                    <img src="<%= user?.profileImage || '/images/default-avatar.png' %>" 
+                         class="avatar clickable-avatar" 
+                         alt="Profile Photo"
+                         data-src="<%= user?.profileImage || '/images/default-avatar.png' %>"
+                         data-name="<%= user?.fullName || 'User' %>"
+                         onclick="openImageViewerFromElement(this)">
+                    <div>
+                        <div class="friend-name" style="font-size: 15px;"><%= user?.fullName || 'User' %></div>
+                        <div class="user-handle" style="font-size: 12px; color: var(--text-mute);">@<%= user?.username || 'user' %></div>
+                    </div>
+                </div>
+                <div class="profile-actions" style="display: flex; gap: 8px;">
+                    <button class="action-btn" onclick="toggleModal('requestsModal')" title="Friend Requests">
+                        <i class="fa-solid fa-user-group"></i>
+                        <% if (user?.friendRequests && user.friendRequests.length > 0) { %>
+                            <span class="notification-badge" style="background: var(--danger); width: 8px; height: 8px; border-radius: 50%; display: inline-block; vertical-align: top;"></span>
+                        <% } %>
+                    </button>
+                    <button class="action-btn" onclick="toggleModal('profileModal')" title="Edit Profile">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <a href="/user/logout" class="action-btn" title="Logout" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="directorySearch" class="search-input" placeholder="Search usernames..." autocomplete="off">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+
+            <div class="list-title">Direct Messages</div>
+            <div class="friends-list" id="friendsDirectory">
+                <% if (visibleFriends.length === 0) { %>
+                    <div class="empty-state-notice" style="padding: 20px; text-align: center; color: var(--text-mute); font-size: 13px;">
+                        No active conversations. Search for users to add friends.
+                    </div>
+                <% } else { %>
+                    <% visibleFriends.forEach(friend => { 
+                        const friendId = getStrId(friend);
+                        const avatar = friend.profileImage || '/images/default-avatar.png';
+                    %>
+                        <div class="friend-card" 
+                             id="friend-<%= friendId %>" 
+                             data-friend-id="<%= friendId %>"
+                             data-full-name="<%= friend.fullName %>"
+                             data-username="<%= friend.username %>"
+                             data-avatar="<%= avatar %>"
+                             onclick="openConversationFromElement(this)">
+                            <img src="<%= avatar %>" alt="<%= friend.fullName %>" class="avatar">            
+                            <div class="friend-info">
+                                <div class="friend-name"><%= friend.fullName %></div>
+                                <div style="font-size: 12px; color: var(--text-mute);">@<%= friend.username %></div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+
+            <% if (user?.blockedUsers && user.blockedUsers.length > 0) { %>
+                <div class="list-title blocked-title" style="margin-top: 16px; color: var(--warning); font-size: 11px; text-transform: uppercase;">
+                    Blocked Users (<%= user.blockedUsers.length %>)
+                </div>
+                <div class="friends-list blocked-list" style="max-height: 160px; overflow-y: auto;">
+                    <% user.blockedUsers.forEach(blocked => { 
+                        const targetId = getStrId(blocked);
+                        const name = blocked.fullName || 'User';
+                        const username = blocked.username || 'user';
+                        const avatar = blocked.profileImage || '/images/default-avatar.png';
+                    %>
+                        <div class="friend-card blocked-card" style="justify-content: space-between; cursor: default; padding: 8px 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                                <img src="<%= avatar %>" class="avatar" style="width: 30px; height: 30px;" alt="<%= name %>">
+                                <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <div class="friend-name" style="font-size: 13px;"><%= name %></div>
+                                    <div style="font-size: 11px; color: var(--text-mute);">@<%= username %></div>
+                                </div>
+                            </div>
+                            <button data-target-id="<%= targetId %>" onclick="manageUserAction('/user/unblock', this.dataset.targetId)" class="btn-send" style="padding: 4px 8px; font-size: 11px; background: var(--danger); white-space: nowrap;">
+                                Unblock
+                            </button>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="chat-area">
+            <div id="fallbackWelcome" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-mute); gap: 16px;">
+                <i class="fa-solid fa-comments" style="font-size: 48px; color: var(--accent); opacity: 0.7;"></i>
+                <p style="font-size: 14px; letter-spacing: 0.5px;">Select a conversation to start messaging.</p>
+            </div>
+            
+            <div class="chat-header" id="activeChatHeader" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="action-btn back-btn" onclick="backToSidebar()" title="Back to conversations">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <!-- Clickable active friend profile photo -->
+                    <img id="activeChatAvatar" 
+                         src="/images/default-avatar.png" 
+                         class="avatar clickable-avatar" 
+                         alt="Active Chat Profile Image"
+                         onclick="viewActiveChatAvatar()">
+                    <div>
+                        <div class="friend-name" id="activeChatName">Loading...</div>
+                        <div style="font-size: 12px; color: var(--text-mute);" id="activeChatUsername"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="action-btn" id="blockControlBtn" title="Block User"><i class="fa-solid fa-ban"></i></button>
+                    <button class="action-btn" id="reportControlBtn" title="Report Infraction"><i class="fa-solid fa-flag"></i></button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="messageStream" style="display: none;"></div>
+
+            <!-- MEDIA PREVIEW CONTAINER -->
+            <div id="mediaPreviewContainer" style="display: none; padding: 10px 16px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-paperclip" style="color: var(--accent);"></i>
+                    <span id="mediaPreviewName" style="font-size: 13px; color: var(--text-main); font-weight: 500;">File attached</span>
+                </div>
+                <button type="button" onclick="cancelMediaSelection()" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- CHAT INPUT PANEL -->
+            <div class="chat-input-area" id="activeChatInputPanel" style="display: none;">
+                <label for="mediaFileInput" class="action-btn" title="Attach Media" style="cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0;">
+                    <i class="fa-solid fa-paperclip"></i>
+                </label>
+                <input type="file" id="mediaFileInput" accept="image/*,video/*" style="display: none;" onchange="handleFileSelectedPreview(event)">
+
+                <button class="action-btn" id="viewOnceToggleBtn" onclick="toggleViewOnceMode()" title="Toggle View Once" type="button">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+
+                <input type="text" id="messagePayloadInput" class="chat-field" placeholder="Type your message here..." autocomplete="off">
+                <button class="btn-send" id="messageDispatchBtn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN IMAGE VIEWER MODAL -->
+    <div id="imageViewerModal" class="image-viewer-modal" onclick="closeImageViewer(event)">
+        <span class="image-viewer-close" onclick="closeImageViewer(event)">&times;</span>
+        <img id="imageViewerTarget" class="image-viewer-content" src="" alt="Full Resolution Profile Photo">
+        <div id="imageViewerCaption" style="margin-top: 12px; color: #fff; font-size: 14px; font-weight: 500;"></div>
+    </div>
+
+    <!-- FRIEND REQUESTS MODAL -->
+    <div id="requestsModal" class="modal" onclick="closeModalOnOutsideClick(event, 'requestsModal')">
+        <div class="modal-content">
+            <h3>Friend Requests</h3>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <% if (!user?.friendRequests || user.friendRequests.length === 0) { %>
+                    <p style="color: var(--text-mute); font-size: 14px; text-align: center; padding: 10px;">No pending incoming requests.</p>
+                <% } else { %>
+                    <% user.friendRequests.forEach(req => { %>
+                        <div class="request-item">
+                            <div>
+                                <div style="font-weight: 600; font-size: 14px;"><%= req.fullName %></div>
+                                <div style="font-size: 12px; color: var(--text-mute);">@<%= req.username %></div>
+                            </div>
+                            <form action="/user/friend-request/respond" method="POST" style="display: flex; gap: 8px;">
+                                <input type="hidden" name="requesterId" value="<%= req._id %>">
+                                <button type="submit" name="action" value="accept" class="btn-send" style="padding: 6px 12px; font-size: 12px; background: var(--success);">Accept</button>
+                                <button type="submit" name="action" value="reject" class="btn-send" style="padding: 6px 12px; font-size: 12px; background: var(--danger);">Decline</button>
+                            </form>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+            <button class="btn-send" style="margin-top: 20px; width: 100%; background: #334155;" onclick="toggleModal('requestsModal')">Close</button>
+        </div>
+    </div>
+
+    <!-- EDIT PROFILE MODAL -->
+    <div id="profileModal" class="modal" onclick="closeModalOnOutsideClick(event, 'profileModal')">
+        <div class="modal-content">
+            <h3>Edit Profile Details</h3>
+            <form action="/user/profile/update" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" name="fullName" value="<%= user?.fullName || '' %>" required> 
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" value="<%= user?.username || '' %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Profile Photo</label>
+                    <input type="file" name="profileImage" accept="image/*">
+                </div>
+
+                <div class="form-group">
+                    <label>Short Bio Description</label>
+                    <textarea name="bio" rows="3" placeholder="Tell us about yourself..."><%= user?.bio || '' %></textarea>
+                </div>
+
+                <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn-send" style="background: #334155;" onclick="toggleModal('profileModal')">Cancel</button>
+                    <button type="submit" class="btn-send">Save Changes</button>
+                </div>
+            </form> 
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const appEl = document.getElementById('appContainer');
+        window.CURRENT_USER_ID = appEl.dataset.userId;
+        window.CURRENT_USER_USERNAME = appEl.dataset.userUsername;
+        window.CURRENT_USER_BLOCKED_ARRAY = JSON.parse(appEl.dataset.blocked || '[]');
+        window.CURRENT_USER_FRIENDS_ARRAY = JSON.parse(appEl.dataset.friends || '[]');
+
+        function openImageViewer(src, caption = '') {
+            if (!src || src === '/images/default-avatar.png') return;
+            const modal = document.getElementById('imageViewerModal');
+            const targetImg = document.getElementById('imageViewerTarget');
+            const captionEl = document.getElementById('imageViewerCaption');
+
+            targetImg.src = src;
+            captionEl.innerText = caption;
+            modal.style.display = 'flex';
+        }
+
+        function openImageViewerFromElement(el) {
+            if (!el) return;
+            openImageViewer(el.dataset.src, el.dataset.name);
+        }
+
+        function closeImageViewer(event) {
+            if (event.target.id === 'imageViewerModal' || event.target.classList.contains('image-viewer-close')) {
+                document.getElementById('imageViewerModal').style.display = 'none';
+            }
+        }
+
+        function viewActiveChatAvatar() {
+            const avatarImg = document.getElementById('activeChatAvatar');
+            const activeName = document.getElementById('activeChatName')?.innerText || '';
+            if (avatarImg && avatarImg.src) {
+                openImageViewer(avatarImg.src, activeName);
+            }
+        }
+
+        async function handleFileSelectedPreview(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const previewContainer = document.getElementById('mediaPreviewContainer');
+            const previewName = document.getElementById('mediaPreviewName');
+            
+            if (previewContainer && previewName) {
+                previewName.innerText = `Selected: ${file.name}`;
+                previewContainer.style.display = 'flex';
+            }
+
+            if (typeof handleFileSelected === 'function') {
+                await handleFileSelected(event);
+            }
+        }
+
+        function cancelMediaSelection() {
+            const fileInput = document.getElementById('mediaFileInput');
+            const previewContainer = document.getElementById('mediaPreviewContainer');
+            const inputField = document.getElementById('messagePayloadInput');
+            
+            if (fileInput) fileInput.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (typeof selectedMediaData !== 'undefined') selectedMediaData = null;
+            if (inputField) inputField.placeholder = "Type your message here...";
+        }
+    </script>
+    <script src="/home.js"></script>
+</body>
+</html>

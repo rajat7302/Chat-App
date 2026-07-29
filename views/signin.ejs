@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SigninPage</title>
+        <meta charset = "utf-8">
+        <meta name = "viewport" content = "width=device-width, initial-scale = 1.0">
+        <link rel = "stylesheet" href = "/login.css">
+    </head>
+    <body>
+         <form action="/user/signin" method="post" class="form">
+    <h1 id="h">Login Page</h1>
+
+    <% if (locals.error) { %>
+        <div style="background-color: #ffdddd; color: #d8000c; padding: 10px; margin-bottom: 15px; border-radius: 4px; text-align: center; font-weight: bold;">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <div>Email<input type="email" id="user" placeholder="Enter your email" name="email"></div>
+    <div>Password<input type="password" id="pass" placeholder="Enter your password" name="password"></div>
+    <div>
+        <input type="submit" id="submit">
+    </div>
+    <a href="/user/signup">New User SignUp?</a>
+    <a href="/user/forgot-password" class="forgot-link">Forgot Password?</a>
+    <div style="margin-top: 15px; text-align: center;">
+        <a href="/auth/google" style="display: inline-block; padding: 10px 20px; background-color: #df4930; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            Sign In with Google
+        </a>
+    </div>
+</form>
+        
+    </body>
+</html>

@@ -40,6 +40,8 @@ const MessageSchema = new mongoose.Schema({
         type: Boolean, 
         default: false 
     },
+    clearedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    
     timestamp: {
         type: Date,
         default: Date.now

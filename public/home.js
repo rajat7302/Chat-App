@@ -578,44 +578,40 @@ function triggerForward(text, mediaUrl, mediaType) {
 
 // Clear Entire Conversation (Top-right Trash Icon fix)
 async function clearCurrentChat() {
-    // Multi-tier fallback to recover activeFriendId if it drifted or wasn't tracked globally
-    if (!activeFriendId) {
-        const headerEl = document.getElementById('activeChatHeader');
-        if (headerEl && headerEl.dataset.activeFriendId) {
-            activeFriendId = headerEl.dataset.activeFriendId;
-        }
-    }
-    if (!activeFriendId) {
-        const activeCard = document.querySelector('.friend-card.active, [data-friend-id].active');
-        if (activeCard) activeFriendId = activeCard.dataset.friendId;
-    }
+    // 1. Retrieve the active friend ID set by openConversation()
+    const headerEl = document.getElementById('activeChatHeader');
+    const friendId = activeFriendId || headerEl?.dataset?.activeFriendId;
 
-    if (!activeFriendId) {
-        alert("No active chat selected to clear.");
+    if (!friendId) {
+        alert("No active chat to clear.");
         return;
     }
 
-    if (!confirm("Are you sure you want to clear this entire conversation history?")) return;
+    if (!confirm("Are you sure you want to clear this conversation history?")) {
+        return;
+    }
 
     try {
-        const response = await fetch('/user/messages/clear-chat', {
+        const response = await fetch(`/user/chat/clear/${friendId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ friendId: activeFriendId })
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
 
-        const data = await response.json();
-        if (data.success || response.ok) {
-            const stream = document.getElementById('messageStream');
-            if (stream) {
-                stream.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-mute); font-size:13px;">Chat history cleared.</div>';
+        const result = await response.json();
+
+        if (result.success) {
+            const streamEl = document.getElementById('messageStream');
+            if (streamEl) {
+                streamEl.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-mute); font-size:13px;">No prior messages. Say hello!</div>';
             }
         } else {
-            alert(data.error || 'Failed to clear chat.');
+            alert("Could not clear chat: " + (result.error || result.message || "Server error"));
         }
     } catch (err) {
-        console.error('Error clearing conversation:', err);
-        alert('Server error while clearing conversation.');
+        console.error("Error clearing chat:", err);
+        alert("Something went wrong while clearing the chat.");
     }
 }
 

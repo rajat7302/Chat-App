@@ -187,6 +187,10 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 6px;">
+                    <!-- ADDED: Clear Chat Button -->
+                    <button class="action-btn" id="clearChatBtn" onclick="clearCurrentChat()" title="Clear Chat">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                     <button class="action-btn" id="blockControlBtn" title="Block User"><i class="fa-solid fa-ban"></i></button>
                     <button class="action-btn" id="reportControlBtn" title="Report Infraction"><i class="fa-solid fa-flag"></i></button>
                 </div>
@@ -286,6 +290,30 @@
                     <button type="submit" class="btn-send">Save Changes</button>
                 </div>
             </form> 
+        </div>
+    </div>
+
+    <!-- ADDED: FORWARD MESSAGE MODAL -->
+    <div id="forwardModal" class="modal" onclick="closeModalOnOutsideClick(event, 'forwardModal')">
+        <div class="modal-content">
+            <h3>Forward Message</h3>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span style="font-size: 13px; color: var(--text-mute);">Select friends to forward to:</span>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent); cursor: pointer;">
+                    <input type="checkbox" id="selectAllForwardCheck" onchange="toggleSelectAllForward(this)" style="accent-color: var(--accent);">
+                    Select All
+                </label>
+            </div>
+            
+            <div id="forwardFriendsList" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn-send" style="background: #334155;" onclick="toggleModal('forwardModal')">Cancel</button>
+                <button type="button" class="btn-send" onclick="submitForwardMessage()">Forward</button>
+            </div>
         </div>
     </div>
 

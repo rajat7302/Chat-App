@@ -521,4 +521,35 @@ router.post('/messages/delete-for-me', async (req, res) => {
         return res.status(500).json({ success: false, error: "Failed to delete message" });
     }
 });
+
+// One-sided Clear Chat endpoint
+// One-sided Clear Chat endpoint
+router.post('/chat/clear/:friendId', async (req, res) => {
+    try {
+        const currentUserId = req.user?._id;
+        const friendId = req.params.friendId;
+
+        if (!currentUserId || !friendId) {
+            return res.status(400).json({ success: false, error: "Missing user or friend ID" });
+        }
+
+        // Fixed field names to senderId and receiverId
+        await Message.updateMany(
+            {
+                $or: [
+                    { senderId: currentUserId, receiverId: friendId },
+                    { senderId: friendId, receiverId: currentUserId }
+                ]
+            },
+            {
+                $addToSet: { deletedFor: currentUserId }
+            }
+        );
+
+        return res.json({ success: true, message: 'Chat history cleared for you.' });
+    } catch (err) {
+        console.error("Clear chat error:", err);
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
 module.exports = router;

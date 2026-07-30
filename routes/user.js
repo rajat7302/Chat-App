@@ -211,8 +211,6 @@ router.post('/reset-password/:token', async (req, res) => {
     try {
         const { password } = req.body;
 
-        // Strong password regex: 
-        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character
         const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
         if (!password || !strongPasswordRegex.test(password)) {
@@ -221,7 +219,6 @@ router.post('/reset-password/:token', async (req, res) => {
             );
         }
 
-        // Find valid user with active token
         const user = await User.findOne({
             resetPasswordToken: req.params.token,
             resetPasswordExpires: { $gt: Date.now() }
@@ -231,16 +228,15 @@ router.post('/reset-password/:token', async (req, res) => {
             return res.status(400).send("Reset Link is invalid or has expired.");
         }
 
-       
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        // Pass the plain-text password. 
+        // The model's pre-save hook will automatically validate, salt, and hash it via crypto.
+        user.password = password;
 
         // Invalidate token
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         
-        // Pass validateBeforeSave: false so Mongoose ignores the regex on the hash
-        await user.save({ validateBeforeSave: false });
+        await user.save();
         
         return res.send("Password reset successful! You can now log in.");
     } catch (err) {

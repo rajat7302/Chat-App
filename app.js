@@ -21,7 +21,7 @@ const User = require('./models/user');
 const Message = require('./models/Message'); 
 const adminRoute = require('./routes/admin');
 
-const MONGO_URL = process.env.MONGO_URI || process.env.MONGO_URL || "mongodb://localhost:27017/chat-app-standard";
+const MONGO_URL = process.env.MONGO_URL || process.env.MONGO_URL || "mongodb://localhost:27017/chat-app-standard";
 
 const EDIT_TIME_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes Window
 

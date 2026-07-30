@@ -231,14 +231,16 @@ router.post('/reset-password/:token', async (req, res) => {
             return res.status(400).send("Reset Link is invalid or has expired.");
         }
 
-        // Hash and save new password
+       
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
 
         // Invalidate token
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
-        await user.save();
+        
+        // Pass validateBeforeSave: false so Mongoose ignores the regex on the hash
+        await user.save({ validateBeforeSave: false });
         
         return res.send("Password reset successful! You can now log in.");
     } catch (err) {

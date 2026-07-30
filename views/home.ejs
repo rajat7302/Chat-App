@@ -387,6 +387,18 @@
     window.addEventListener('resize', updateViewportHeight);
   }
   updateViewportHeight();
+  const chatInput = document.querySelector('.chat-field');
+
+if (chatInput) {
+  chatInput.addEventListener('focus', () => {
+    setTimeout(() => {
+      chatInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      
+      const msgs = document.querySelector('.chat-messages');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    }, 300);
+  });
+}
 </script>
 </body>
 </html>

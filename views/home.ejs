@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/chat.css">
     <style>
-        /* Image Viewer Modal Styling */
         .image-viewer-modal {
             display: none;
             position: fixed;
@@ -57,7 +56,6 @@
         const getStrId = (item) => (item && item._id) ? item._id.toString() : (item ? item.toString() : '');
         const blockedIds = (user?.blockedUsers || []).map(getStrId);
         
-        // Filter out blocked users AND deduplicate entries by user ID
         const rawVisible = (user?.friends || []).filter(f => !blockedIds.includes(getStrId(f)));
         const visibleFriends = Array.from(
             new Map(rawVisible.map(f => [getStrId(f), f])).values()
@@ -175,7 +173,6 @@
                     <button class="action-btn back-btn" onclick="backToSidebar()" title="Back to conversations">
                         <i class="fa-solid fa-arrow-left"></i>
                     </button>
-                    <!-- Clickable active friend profile photo -->
                     <img id="activeChatAvatar" 
                          src="/images/default-avatar.png" 
                          class="avatar clickable-avatar" 
@@ -198,7 +195,6 @@
 
             <div class="chat-messages" id="messageStream" style="display: none;"></div>
 
-            <!-- MEDIA PREVIEW CONTAINER -->
             <div id="mediaPreviewContainer" style="display: none; padding: 10px 16px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <i class="fa-solid fa-paperclip" style="color: var(--accent);"></i>
@@ -209,7 +205,6 @@
                 </button>
             </div>
 
-            <!-- CHAT INPUT PANEL -->
             <div class="chat-input-area" id="activeChatInputPanel" style="display: none;">
                 <label for="mediaFileInput" class="action-btn" title="Attach Media" style="cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0;">
                     <i class="fa-solid fa-paperclip"></i>
@@ -260,7 +255,6 @@
         </div>
     </div>
 
-    <!-- EDIT PROFILE MODAL -->
     <div id="profileModal" class="modal" onclick="closeModalOnOutsideClick(event, 'profileModal')">
         <div class="modal-content">
             <h3>Edit Profile Details</h3>
@@ -293,7 +287,6 @@
         </div>
     </div>
 
-    <!-- ADDED: FORWARD MESSAGE MODAL -->
     <div id="forwardModal" class="modal" onclick="closeModalOnOutsideClick(event, 'forwardModal')">
         <div class="modal-content">
             <h3>Forward Message</h3>

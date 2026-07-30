@@ -393,7 +393,6 @@ router.post('/report', async (req, res) => {
     }
 });
 
-// FIXED ROUTE: Properly extracts userId from req.user
 router.get('/messages/:friendId', async (req, res) => {
     try {
         const userId = req.user?._id;
@@ -510,7 +509,6 @@ router.post('/messages/delete-for-me', async (req, res) => {
             return res.status(400).json({ success: false, error: "Missing required fields" });
         }
 
-        // Add current user's ID to the deletedFor array
         await Message.findByIdAndUpdate(messageId, {
             $addToSet: { deletedFor: userId }
         });
@@ -522,8 +520,6 @@ router.post('/messages/delete-for-me', async (req, res) => {
     }
 });
 
-// One-sided Clear Chat endpoint
-// One-sided Clear Chat endpoint
 router.post('/chat/clear/:friendId', async (req, res) => {
     try {
         const currentUserId = req.user?._id;
@@ -533,7 +529,6 @@ router.post('/chat/clear/:friendId', async (req, res) => {
             return res.status(400).json({ success: false, error: "Missing user or friend ID" });
         }
 
-        // Fixed field names to senderId and receiverId
         await Message.updateMany(
             {
                 $or: [
@@ -550,6 +545,39 @@ router.post('/chat/clear/:friendId', async (req, res) => {
     } catch (err) {
         console.error("Clear chat error:", err);
         return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+router.post('/messages/forward', async (req, res) => {
+    try {
+        const senderId = req.user?._id;
+        const { messageId, recipientIds } = req.body;
+
+        if (!senderId || !messageId || !Array.isArray(recipientIds) || recipientIds.length === 0) {
+            return res.status(400).json({ success: false, error: "Missing required parameters." });
+        }
+
+        const originalMessage = await Message.findById(messageId);
+        if (!originalMessage) {
+            return res.status(404).json({ success: false, error: "Original message not found." });
+        }
+
+        const newMessages = recipientIds.map(receiverId => ({
+            senderId: senderId,
+            receiverId: receiverId,
+            text: originalMessage.text || originalMessage.content || '', 
+            mediaUrl: originalMessage.mediaUrl || null,
+            mediaType: originalMessage.mediaType || null,
+            fileName: originalMessage.fileName || null,
+            isViewOnce: false, 
+            isForwarded: true  
+        }));
+        const createdMessages = await Message.insertMany(newMessages);
+
+        return res.json({ success: true, count: createdMessages.length });
+    } catch (err) {
+        console.error("Error in forward message route:", err);
+        return res.status(500).json({ success: false, error: "Failed to forward message." });
     }
 });
 module.exports = router;

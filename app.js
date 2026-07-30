@@ -60,24 +60,30 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/user', userRoute);
 app.use('/admin', adminRoute);
 
-async function seedSingleAdmin(){
+async function seedSingleAdmin() {
     try {
-        const existingAdmin = await User.findOne({ role : 'admin' });
-        if (!existingAdmin){
-            console.log("No Admin found. Creating the single system Admin");
-            await User.create({
-                fullName : "System Administrator", 
-                email : "adminchatapp@gmail.com",
-                username : "admin",
-                password : "ToHardToGuess@1234", 
-                role : "admin"
-            });
-            console.log("Single Admin created Successfully!");
+        const adminData = {
+            fullName: process.env.ADMIN_FULL_NAME || "System Administrator",
+            email: process.env.ADMIN_EMAIL || "adminchatapp@gmail.com",
+            username: process.env.ADMIN_USERNAME || "admin",
+            password: process.env.ADMIN_PASSWORD || "ToHardToGuess@1234",
+            role: "admin"
+        };
+
+        let existingAdmin = await User.findOne({ role: 'admin' });
+
+        if (!existingAdmin) {
+            await User.create(adminData);
+            console.log("Single Admin created successfully!");
         } else {
-            console.log("Admin account exists. Single admin rule enforced");
+            existingAdmin.username = adminData.username;
+            existingAdmin.email = adminData.email;
+            existingAdmin.password = adminData.password; // Mongoose pre-save hooks will hash this if configured
+            await existingAdmin.save();
+            console.log("Admin account synced with current .env configuration.");
         }
-    } catch(err){
-        console.error("Admin Seed error", err);
+    } catch (err) {
+        console.error("Admin Seed error:", err);
     }
 }
 
@@ -251,7 +257,7 @@ io.on('connection', (socket) => {
             if (isSender && isWithinTimeLimit) {
                 msg.isDeleted = true;
                 msg.text = "This message was deleted";
-                msg.mediaUrl = null; // Clear media reference on delete
+                msg.mediaUrl = null; 
                 await msg.save();
 
                 const payload = { messageId };

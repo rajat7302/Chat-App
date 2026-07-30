@@ -1,21 +1,27 @@
 const JWT = require('jsonwebtoken');
-const {create} = require('../models/user');
 
-const secret = "@#Rajat&%@^@&1234";
-function createTokenForUser(user){
+const secret = process.env.JWT_SECRET || "default_fallback_jwt_secret_dev_only";
+
+function createTokenForUser(user) {
     const payload = {
-      _id: user._id,
+        _id: user._id,
         email: user.email,
         fullName: user.fullName,
         username: user.username,
         profileImage: user.profileImage,
-        role : user.role
-    }
-    const token = JWT.sign(payload, secret);
+        role: user.role
+    };
+    
+    const token = JWT.sign(payload, secret, { expiresIn: '7d' });
     return token;
 }
-function validateToken(token){
+
+function validateToken(token) {
     const payload = JWT.verify(token, secret);
     return payload;
 }
-module.exports = {createTokenForUser, validateToken};
+
+module.exports = {
+    createTokenForUser,
+    validateToken
+};

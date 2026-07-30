@@ -12,14 +12,12 @@ let activeChatAbortController = null;
 const EDIT_TIME_LIMIT_MS = 15 * 60 * 1000; 
 const MAX_FILE_SIZE_MB = 25; 
 
-// Initialize socket connection and sync initial active conversation state
 function initializeChatEngine() {
     try {
         if (currentUserId && socket.connected) {
             socket.emit('join', currentUserId);
         }
 
-        // Auto-detect active conversation if loaded server-side or pre-rendered
         const activeCard = document.querySelector('.friend-card.active, [data-friend-id].active');
         if (activeCard && activeCard.dataset.friendId) {
             activeFriendId = activeCard.dataset.friendId;
@@ -213,8 +211,6 @@ async function openConversation(friendId, fullName, avatarUrl, username = '') {
 
     const headerEl = document.getElementById('activeChatHeader');
     
-    // CRITICAL: Explicitly bind the active friend ID to the header element 
-    // so any action (clear chat, block, etc.) can always retrieve it reliably.
     if (headerEl) {
         headerEl.dataset.activeFriendId = friendId;
         headerEl.style.display = 'flex';
@@ -553,32 +549,16 @@ function triggerDelete(messageId) {
 }
 
 // Fixed Forwarding Feature with Target Selection
+// AFTER (Fixed):
 function triggerForward(text, mediaUrl, mediaType) {
-    const targetUserId = prompt("Enter the User ID or Username of the recipient to forward this message to:");
-    
-    if (!targetUserId || !targetUserId.trim()) return;
-
-    const packet = {
-        senderId: currentUserId,
-        receiverId: targetUserId.trim(),
-        text: text || '',
-        mediaUrl: mediaUrl || null,
-        mediaType: mediaType || null,
-        isViewOnce: false
-    };
-
-    socket.emit('send_message', packet, (res) => {
-        if (res && res.error) {
-            alert("Forward failed: " + res.error);
-        } else {
-            alert("Message forwarded successfully!");
-        }
-    });
+    // Legacy fallback redirect
+    const activeMsg = document.querySelector('[data-message-id]');
+    if (activeMsg) {
+        openForwardModal(activeMsg.dataset.messageId);
+    }
 }
 
-// Clear Entire Conversation (Top-right Trash Icon fix)
 async function clearCurrentChat() {
-    // 1. Retrieve the active friend ID set by openConversation()
     const headerEl = document.getElementById('activeChatHeader');
     const friendId = activeFriendId || headerEl?.dataset?.activeFriendId;
 
@@ -814,10 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (action === 'delete' && messageId) {
                 triggerDelete(messageId);
             } else if (action === 'forward') {
-                const text = target.dataset.text;
-                const mediaUrl = target.dataset.mediaUrl;
-                const mediaType = target.dataset.mediaType;
-                triggerForward(text, mediaUrl, mediaType);
+             openForwardModal(messageId);
             } else if (action === 'delete-for-me' && messageId) {
                 deleteMessageForMe(messageId, msgEl);
             } else if (action === 'view-once' && messageId) {
@@ -946,3 +923,88 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+window.SELECTED_MESSAGE_TO_FORWARD = null;
+
+function openForwardModal(messageId) {
+    if (!messageId) return;
+    window.SELECTED_MESSAGE_TO_FORWARD = messageId;
+    
+    const container = document.getElementById('forwardFriendsList');
+    const selectAllCheck = document.getElementById('selectAllForwardCheck');
+    
+    if (selectAllCheck) selectAllCheck.checked = false;
+
+    // Retrieve friends list stored in appContainer data attribute
+    const friends = window.CURRENT_USER_FRIENDS_ARRAY || [];
+    
+    if (friends.length === 0) {
+        container.innerHTML = `
+            <div style="color: var(--text-mute); font-size: 13px; text-align: center; padding: 12px;">
+                No friends available to forward to.
+            </div>`;
+    } else {
+        container.innerHTML = friends.map(friend => {
+            const friendId = friend._id || friend;
+            const name = friend.fullName || 'User';
+            const username = friend.username || 'user';
+            const avatar = friend.profileImage || '/images/default-avatar.png';
+
+            return `
+                <label style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                        <div>
+                            <div style="font-size: 13px; font-weight: 500;">${name}</div>
+                            <div style="font-size: 11px; color: var(--text-mute);">@${username}</div>
+                        </div>
+                    </div>
+                    <input type="checkbox" class="forward-friend-checkbox" value="${friendId}" style="accent-color: var(--accent); width: 16px; height: 16px;">
+                </label>
+            `;
+        }).join('');
+    }
+
+    toggleModal('forwardModal');
+}
+
+function toggleSelectAllForward(masterCheckbox) {
+    const checkboxes = document.querySelectorAll('.forward-friend-checkbox');
+    checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+}
+
+async function submitForwardMessage() {
+    const messageId = window.SELECTED_MESSAGE_TO_FORWARD;
+    if (!messageId) return alert("No message selected.");
+
+    const checkedBoxes = document.querySelectorAll('.forward-friend-checkbox:checked');
+    const recipientIds = Array.from(checkedBoxes).map(cb => cb.value);
+
+    if (recipientIds.length === 0) {
+        return alert('Please select at least one friend to forward this message to.');
+    }
+
+    try {
+        const response = await fetch('/user/messages/forward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messageId, recipientIds })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            toggleModal('forwardModal');
+            window.SELECTED_MESSAGE_TO_FORWARD = null;
+
+            const headerEl = document.getElementById('activeChatHeader');
+            const activeId = activeFriendId || headerEl?.dataset?.activeFriendId;
+            if (activeId && recipientIds.includes(activeId)) {
+                openConversationFromElement(document.querySelector(`[data-friend-id="${activeId}"]`));
+            }
+        } else {
+            alert("Forwarding failed: " + (result.error || result.message || "Server error"));
+        }
+    } catch (err) {
+        console.error("Error forwarding message:", err);
+    }
+}

@@ -252,7 +252,7 @@
             <button class="btn-send" style="margin-top: 20px; width: 100%; background: #334155;" onclick="toggleModal('requestsModal')">Close</button>
         </div>
     </div>
-
+    
     <div id="profileModal" class="modal" onclick="closeModalOnOutsideClick(event, 'profileModal')">
         <div class="modal-content">
             <h3>Edit Profile Details</h3>
@@ -375,5 +375,18 @@
         }
     </script>
     <script src="/home.js"></script>
+    <script>
+  function updateViewportHeight() {
+    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${vh}px`);
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateViewportHeight);
+  } else {
+    window.addEventListener('resize', updateViewportHeight);
+  }
+  updateViewportHeight();
+</script>
 </body>
 </html>

@@ -1007,16 +1007,14 @@ async function submitForwardMessage() {
         console.error("Error forwarding message:", err);
     }
 }
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    const appContainer = document.querySelector('.app-container');
-    if (appContainer) {
-      appContainer.style.height = `${window.visualViewport.height}px`;
-    }
-
-    const messageStream = document.querySelector('.chat-messages');
-    if (messageStream) {
-      messageStream.scrollTop = messageStream.scrollHeight;
-    }
-  });
-}
+// if (window.visualViewport) {
+//   window.visualViewport.addEventListener('resize', () => {
+//     const chatArea = document.querySelector('.chat-area');
+//     if (chatArea) {
+//       chatArea.style.height = `${window.visualViewport.height}px`;
+      
+//       const msgs = document.querySelector('.chat-messages');
+//       if (msgs) msgs.scrollTop = msgs.scrollHeight;
+//     }
+//   });
+// }

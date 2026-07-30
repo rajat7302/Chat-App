@@ -195,20 +195,40 @@ router.post('/forgot-password', async (req, res) => {
 
 router.post('/reset-password/:token', async (req, res) => {
     try {
+        const { password } = req.body;
+
+        // Strong password regex: 
+        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+        if (!password || !strongPasswordRegex.test(password)) {
+            return res.status(400).send(
+                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)."
+            );
+        }
+
+        // Find valid user with active token
         const user = await User.findOne({
             resetPasswordToken: req.params.token,
             resetPasswordExpires: { $gt: Date.now() }
         });
-        if (!user) return res.status(400).send("Reset Link is invalid or has expired.");
-        
-        user.password = req.body.password;
-        user.resetPasswordToken = null;
-        user.resetPasswordExpires = null;
+
+        if (!user) {
+            return res.status(400).send("Reset Link is invalid or has expired.");
+        }
+
+        // Hash and save new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+
+        // Invalidate token
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
         await user.save();
         
         return res.send("Password reset successful! You can now log in.");
     } catch (err) {
-        console.error(err);
+        console.error("Reset Password Error:", err);
         return res.status(500).send("Server Error");
     }
 });

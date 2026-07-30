@@ -1,16 +1,27 @@
+require('dotenv').config();
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, 
     auth: {
-        user: 'kamalrajatjoshi@gmail.com',
-        pass: 'yhoh qxdk djzo jzmf'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS 
     }
 });
 
-function sendResetEmail(toEmail, resetLink) {
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('❌ SMTP Connection Error:', error);
+    } else {
+        console.log('✅ Mailer is ready to send messages');
+    }
+});
+
+async function sendResetEmail(toEmail, resetLink) {
     const mailOptions = {
-        from: '"Secure Auth System" <kamalrajatjoshi@gmail.com>',
+        from: `"Secure Auth System" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: 'Password Reset Request',
         html: `
@@ -24,7 +35,15 @@ function sendResetEmail(toEmail, resetLink) {
             </div>
         `
     };
-    return transporter.sendMail(mailOptions);
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('📧 Email sent successfully:', info.messageId);
+        return info;
+    } catch (error) {
+        console.error('❌ Failed to send reset email:', error);
+        throw error; 
+    }
 }
 
 module.exports = { sendResetEmail };

@@ -1,4 +1,4 @@
-require('dotenv').config(); // Load environment variables from .env
+require('dotenv').config(); 
 
 const mongoose = require('mongoose');
 const express = require('express');
@@ -26,7 +26,6 @@ const MONGO_URL = process.env.MONGO_URL || process.env.MONGO_URL || "mongodb://l
 const EDIT_TIME_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes Window
 
 const cloudinary = require('cloudinary').v2;
-// console.log("JWT Secret Loaded:", process.env.JWT_SECRET ? "YES" : "NO (Using Fallback)");
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -78,7 +77,7 @@ async function seedSingleAdmin() {
         } else {
             existingAdmin.username = adminData.username;
             existingAdmin.email = adminData.email;
-            existingAdmin.password = adminData.password; // Mongoose pre-save hooks will hash this if configured
+            existingAdmin.password = adminData.password; 
             await existingAdmin.save();
             console.log("Admin account synced with current .env configuration.");
         }

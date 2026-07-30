@@ -36,7 +36,6 @@
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control" id="password" name="password" required>
                 
-                <!-- Password Strength Meter UI -->
                 <div class="progress mt-2" style="height: 6px;">
                     <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
@@ -50,7 +49,6 @@
         
         <a href="/user/signin">Already a registered User? Login</a>
 
-        <!-- Real-Time Password Strength Script -->
       <script>
     const passwordInput = document.getElementById('password');
     const strengthBar = document.getElementById('password-strength-bar');
@@ -68,7 +66,6 @@
 
             strengthBar.style.width = strength + '%';
 
-            // Using setProperty with 'important' to override any clashing CSS rules in signup.css
             if (strength <= 25) {
                 strengthBar.style.setProperty('background-color', '#dc3545', 'important'); // Red
                 feedbackText.textContent = 'Too weak (Needs 8+ chars, uppercase, number, symbol)';

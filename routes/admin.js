@@ -21,7 +21,7 @@ router.get('/dashboard', restrictToAdmin, async (req, res) => {
 router.post('/report/resolve-and-ban/:reportId', restrictToAdmin, async (req, res) => {
     try {
         const { reportId } = req.params;
-        const { action } = req.body; // 'ban' or 'dismiss'
+        const { action } = req.body; 
 
         const report = await Report.findById(reportId);
         if (!report) return res.status(404).send("Report not found");
@@ -50,7 +50,6 @@ router.post('/user/toggle-ban/:userId', restrictToAdmin, async (req, res) => {
         const targetUser = await User.findById(userId);
         if (!targetUser) return res.status(404).send("User not found");
 
-        // Prevent modifying admin accounts
         if (targetUser.role === 'admin') {
             return res.status(403).send("Cannot ban admin accounts.");
         }

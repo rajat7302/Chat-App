@@ -15,12 +15,10 @@ async (accessToken, refreshToken, profile, done) => {
         let user = await User.findOne({ email: userEmail });
         
         if (!user) {
-            // Generate a clean base username from email prefix
             const baseUsername = userEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
             let uniqueUsername = baseUsername;
             let userExists = await User.findOne({ username: uniqueUsername });
 
-            // Ensure uniqueness by appending random digits if taken
             while (userExists) {
                 const randomSuffix = Math.floor(1000 + Math.random() * 9000);
                 uniqueUsername = `${baseUsername}${randomSuffix}`;
@@ -29,7 +27,7 @@ async (accessToken, refreshToken, profile, done) => {
 
             user = await User.create({
                 fullName: profile.displayName,
-                username: uniqueUsername, // Provided to satisfy Mongoose schema
+                username: uniqueUsername, 
                 email: userEmail,
                 password: `GOOGLE_AUTH_${Date.now()}`
             });

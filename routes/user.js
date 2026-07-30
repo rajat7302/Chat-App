@@ -228,11 +228,9 @@ router.post('/reset-password/:token', async (req, res) => {
             return res.status(400).send("Reset Link is invalid or has expired.");
         }
 
-        // Pass the plain-text password. 
-        // The model's pre-save hook will automatically validate, salt, and hash it via crypto.
+        
         user.password = password;
 
-        // Invalidate token
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         

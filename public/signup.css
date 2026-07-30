@@ -101,7 +101,6 @@ body {
         width: 26rem; 
     }
 }
-/* Progress Bar Container Style */
 .progress {
     width: 100%;
     background-color: rgba(255, 255, 255, 0.2);
@@ -110,7 +109,6 @@ body {
     background-clip: padding-box;
 }
 
-/* Progress Bar Fill Element Style */
 .progress-bar {
     height: 100%;
     width: 0%;

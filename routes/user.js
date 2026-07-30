@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const router = Router();
 const User = require('../models/user');
-const Message = require('../models/message'); 
+const Message = require('../models/Message'); 
 const { createTokenForUser } = require("../services/authentication");
 const { sendResetEmail } = require('../services/email');
 const { randomBytes } = require('crypto');

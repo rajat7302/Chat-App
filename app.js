@@ -26,7 +26,7 @@ const MONGO_URL = process.env.MONGO_URI || process.env.MONGO_URL || "mongodb://l
 const EDIT_TIME_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes Window
 
 const cloudinary = require('cloudinary').v2;
-
+// console.log("JWT Secret Loaded:", process.env.JWT_SECRET ? "YES" : "NO (Using Fallback)");
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,

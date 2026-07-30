@@ -1008,3 +1008,19 @@ async function submitForwardMessage() {
         console.error("Error forwarding message:", err);
     }
 }
+/* Keep chat stream visible above mobile keyboard */
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer) {
+      // Set container height directly to the visual viewport height
+      appContainer.style.height = `${window.visualViewport.height}px`;
+    }
+
+    // Scroll chat stream to bottom
+    const messageStream = document.querySelector('.chat-messages');
+    if (messageStream) {
+      messageStream.scrollTop = messageStream.scrollHeight;
+    }
+  });
+}

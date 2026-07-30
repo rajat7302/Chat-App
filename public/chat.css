@@ -434,3 +434,45 @@ body {
         font-size: 16px; /* Prevents auto-zoom on iOS Safari */
     }
 }
+/* Mobile Keyboard & Viewport Fixes */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  /* Prevents whole page rubber-banding on iOS when keyboard appears */
+  position: fixed; 
+  width: 100%;
+}
+
+.chat-area {
+  /* Fits the dynamic area visible above the touch keyboard */
+  height: 100%; 
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 768px) {
+  .app-container {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-area {
+    height: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+  }
+}

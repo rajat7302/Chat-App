@@ -238,18 +238,23 @@ body {
 }
 
 /* INPUT AREA */
+/* INPUT AREA FIXES */
 .chat-input-area { 
     padding: 12px 16px; 
     border-top: 1px solid var(--glass-border); 
     background: #121526;
     display: none; 
     align-items: center;
-    gap: 10px; 
+    gap: 8px; /* Slightly tighter gap for mobile screens */
+    width: 100%;
+    box-sizing: border-box;
+    position: sticky;
+    bottom: 0;
 }
 
 .chat-field { 
     flex: 1 1 auto; 
-    min-width: 0;
+    min-width: 0; /* CRITICAL: Allows flex input to shrink below default size */
     height: 42px;
     padding: 0 16px; 
     background: rgba(255, 255, 255, 0.05); 
@@ -266,11 +271,11 @@ body {
 }
 
 .btn-send { 
-    flex-shrink: 0;
+    flex-shrink: 0; /* Prevents Send button from squishing on small screens */
     height: 42px;
     background: var(--accent); 
     border: none; 
-    padding: 0 22px; 
+    padding: 0 18px; 
     border-radius: 21px; 
     color: white; 
     font-weight: 600;
@@ -287,6 +292,7 @@ body {
 }
 
 .action-btn { 
+    flex-shrink: 0; /* Prevents attachment/history icons from squishing */
     background: none; 
     border: none; 
     color: var(--text-mute); 
@@ -380,15 +386,16 @@ body {
     margin-bottom: 10px;
 }
 
-
+/* RESPONSIVE MEDIA QUERY FIXES */
 @media (max-width: 768px) {
     body {
         padding: 0; 
+        height: 100dvh; /* Dynamic Viewport Height for Mobile */
     }
 
     .app-container {
         width: 100vw;
-        height: 100vh;
+        height: 100dvh; /* Dynamic Viewport Height */
         max-height: none;
         border-radius: 0; 
         border: none;
@@ -401,14 +408,12 @@ body {
         border-right: none;
     }
 
-    
     .chat-area {
         display: none;
         width: 100%;
-        height: 100%;
+        height: 100dvh;
     }
 
-    
     .app-container.chat-active .sidebar {
         display: none;
     }
@@ -417,16 +422,15 @@ body {
         display: flex;
     }
 
-    
     .msg-bubble {
         max-width: 85%;
     }
 
     .chat-input-area {
-        padding: 10px;
+        padding: 8px 10px;
     }
 
     .chat-field {
-        font-size: 16px; 
+        font-size: 16px; /* Prevents auto-zoom on iOS Safari */
     }
 }
